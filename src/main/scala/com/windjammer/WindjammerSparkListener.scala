@@ -5,7 +5,7 @@ import java.util
 import com.windjammer.models._
 import com.windjammer.reporters.Reporter
 import com.windjammer.utils.WindjammerUtils
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.scheduler._
 import org.slf4j.LoggerFactory
 
@@ -15,13 +15,13 @@ import scala.collection.JavaConverters._
 /**
   * Created by king on 17-6-8.
   */
-class WindjammerSparkListener(conf: SparkConf) extends SparkListener {
+class WindjammerSparkListener(sc: SparkContext) extends SparkListener {
   private val logger = LoggerFactory.getLogger(getClass)
   private val reporter: Reporter = createReporter()
 
-  private var name: String = _
-  private var appId: String = _
-  private var appStartTime: Long = _
+  private val name: String = sc.appName
+  private val appId: String = sc.applicationId
+  private val appStartTime: Long = sc.startTime
   private var appEndTime: Long = _
 
   // jobId -> (jobStartTime, jobEndTime, stageIds)
@@ -36,15 +36,6 @@ class WindjammerSparkListener(conf: SparkConf) extends SparkListener {
     new util.HashMap[Int, ArrayBuffer[Long]]()
 
   private val tasks: util.HashMap[Long, (Long, Long)] = new util.HashMap[Long, (Long, Long)]()
-
-
-  override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = {
-    name = applicationStart.appName
-    if (applicationStart.appId.isDefined) {
-      appId = applicationStart.appId.get
-    }
-    appStartTime = applicationStart.time
-  }
 
   // statistic job running time
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
@@ -86,7 +77,7 @@ class WindjammerSparkListener(conf: SparkConf) extends SparkListener {
   }
 
   private def createReporter(): Reporter = {
-    val props = WindjammerUtils.reporterProperties(conf)
+    val props = WindjammerUtils.reporterProperties(sc.getConf)
     val className = props.getOrElse("class",
       throw new Exception("spark.windjammer.reporter.class is not defined."))
     val reporter = Class.forName(className)
