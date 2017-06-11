@@ -100,8 +100,8 @@ class WindjammerSparkListener(conf: SparkConf) extends SparkListener {
       val stageInfo = job._2._3.filter(stages.containsKey(_))
         .map { stageId =>
           val stage = stages.get(stageId)
-          val taskInfo = stageMapToTasks.get(stage)
-            .filter(tasks.containsKey(_))
+          val taskInfo = stageMapToTasks.get(stageId)
+//            .filter(tasks.containsKey(_))
             .map { taskId =>
               val task = tasks.get(taskId)
               TaskInfo(task._1, task._2)
