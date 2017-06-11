@@ -1,5 +1,5 @@
 package com.windjammer.reporters
-import java.io.{BufferedOutputStream, FileOutputStream}
+import java.io.{BufferedOutputStream, File, FileOutputStream}
 
 import com.windjammer.models.ApplicationInfo
 import com.windjammer.utils.WindjammerUtils
@@ -15,10 +15,17 @@ class FileStorageReporter(conf: Map[String, String]) extends Reporter {
     throw new Exception("missing store for FileStorageReporter."))
 
   override def report(info: ApplicationInfo): Unit = {
-    var file: BufferedOutputStream = null
+    val dir = new File(store)
+    if (!dir.exists()) dir.mkdirs()
+
+    val filename = store + s"/${info.name}-${info.appId}"
+    logger.info(s"writing statistic result into $store")
+    var file: FileOutputStream = null
     try {
-      file = new BufferedOutputStream(new FileOutputStream(store + s"/${info.appId}"))
-      val data = WindjammerUtils.mapper.writeValueAsBytes(info)
+      file = new FileOutputStream(filename)
+      val data = WindjammerUtils.mapper
+        .writerWithDefaultPrettyPrinter()
+        .writeValueAsBytes(info)
       file.write(data)
       file.flush()
     } catch {
