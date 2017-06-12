@@ -18,7 +18,7 @@ class FileStorageReporter(conf: Map[String, String]) extends Reporter {
     val dir = new File(store)
     if (!dir.exists()) dir.mkdirs()
 
-    val filename = store + s"/${info.name}-${info.appId}"
+    val filename = store + s"/${info.name}"
     logger.info(s"writing statistic result into $store")
     var file: FileOutputStream = null
     try {

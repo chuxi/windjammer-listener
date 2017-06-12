@@ -29,8 +29,8 @@ class WindjammerSparkListener(sc: SparkContext) extends SparkListener {
     new util.HashMap[Int, (Long, Long, Seq[Int])]()
 
   // stageId -> (submissionTime, stageEndTime, stageRDD which runs on
-  private val stages: util.HashMap[Int, (Long, Long, Seq[RDDInfo])] =
-    new util.HashMap[Int, (Long, Long, Seq[RDDInfo])]()
+  private val stages: util.HashMap[Int, (Long, Long, RDDInfo)] =
+    new util.HashMap[Int, (Long, Long, RDDInfo)]()
 
   private val stageMapToTasks: util.HashMap[Int, ArrayBuffer[Long]] =
     new util.HashMap[Int, ArrayBuffer[Long]]()
@@ -55,10 +55,11 @@ class WindjammerSparkListener(sc: SparkContext) extends SparkListener {
 
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     val info = stageCompleted.stageInfo
-    val rddInfos = info.rddInfos.map(r =>
-      RDDInfo(r.numCachedPartitions, r.numPartitions, r.memSize, r.diskSize))
+    // here we only keep the direct rdd for the stage, without stage's ancestor rdds
+    val rdd = info.rddInfos.head
+    val rddInfo = RDDInfo(rdd.numCachedPartitions, rdd.numPartitions, rdd.memSize, rdd.diskSize)
 
-    stages.put(info.stageId, (info.submissionTime.get, info.completionTime.get, rddInfos))
+    stages.put(info.stageId, (info.submissionTime.get, info.completionTime.get, rddInfo))
   }
 
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
@@ -111,7 +112,7 @@ class WindjammerSparkListener(sc: SparkContext) extends SparkListener {
         val stageRunningTime = stage.completionTime - stage.submissionTime
         val tasksTimeCost = stage.tasks.map(task => task.finishTime - task.launchTime).sum
         val timeCompressedRatio = tasksTimeCost * 1.0 / stageRunningTime
-        val totalDiskSize = stage.rdd.map(r => r.diskSize).sum
+        val totalDiskSize = stage.rdd.diskSize
         val missCachedSize = if (totalDiskSize > 0) Some(totalDiskSize) else None
 
         StatisticStageInfo(stage.stageId,

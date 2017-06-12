@@ -19,7 +19,7 @@ case class StageInfo(stageId: Int,
                      submissionTime: Long,
                      completionTime: Long,
                      tasks: Seq[TaskInfo],
-                     rdd: Seq[RDDInfo])
+                     rdd: RDDInfo)
 
 case class RDDInfo(numCachedPartitions: Int,
                    totalPartitions: Int,

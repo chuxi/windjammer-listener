@@ -1,5 +1,6 @@
 package com.windjammer.utils
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.spark.SparkConf
@@ -10,6 +11,7 @@ import org.apache.spark.SparkConf
 object WindjammerUtils {
   lazy val mapper: ObjectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
+    .setSerializationInclusion(Include.NON_NULL)
 
   def reporterProperties(conf: SparkConf): Map[String, String] = {
     val len = "spark.windjammer.reporter.".length
